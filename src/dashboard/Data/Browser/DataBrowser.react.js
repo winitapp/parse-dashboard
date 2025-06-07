@@ -622,7 +622,7 @@ export default class DataBrowser extends React.Component {
       app,
       ...other
     } = this.props;
-    const { preventSchemaEdits, applicationId } = app;
+    const { preventSchemaEdits, applicationId, deleteOptions } = app;
     return (
       <div>
         <div>
@@ -690,8 +690,13 @@ export default class DataBrowser extends React.Component {
           className={className}
           classNameForEditors={className}
           setCurrent={this.setCurrent}
+          enableDeleteClass={deleteOptions.class && !preventSchemaEdits}
+          enableDeleteColumns={deleteOptions.columns && !preventSchemaEdits}
+          enableDeleteSelectedRows={deleteOptions.selectedRows && !preventSchemaEdits}
           enableDeleteAllRows={
-            app.serverInfo.features.schemas.clearAllDataFromClass && !preventSchemaEdits
+            deleteOptions.allData &&
+            app.serverInfo.features.schemas.clearAllDataFromClass &&
+            !preventSchemaEdits
           }
           enableExportClass={app.serverInfo.features.schemas.exportClass && !preventSchemaEdits}
           enableSecurityDialog={
