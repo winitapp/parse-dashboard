@@ -622,7 +622,7 @@ export default class DataBrowser extends React.Component {
       app,
       ...other
     } = this.props;
-    const { preventSchemaEdits, applicationId, deleteOptions } = app;
+    const { preventSchemaEdits, applicationId, deleteOptions, exportOptions } = app;
     return (
       <div>
         <div>
@@ -698,7 +698,13 @@ export default class DataBrowser extends React.Component {
             app.serverInfo.features.schemas.clearAllDataFromClass &&
             !preventSchemaEdits
           }
-          enableExportClass={app.serverInfo.features.schemas.exportClass && !preventSchemaEdits}
+          enableExportSchema={exportOptions.schema && !preventSchemaEdits}
+          enableExportSelectedRows={exportOptions.selectedRows && !preventSchemaEdits}
+          enableExportClass={
+            exportOptions.allData &&
+            app.serverInfo.features.schemas.exportClass &&
+            !preventSchemaEdits
+          }
           enableSecurityDialog={
             app.serverInfo.features.schemas.editClassLevelPermissions &&
             !disableSecurityDialog &&

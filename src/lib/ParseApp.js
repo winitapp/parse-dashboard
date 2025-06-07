@@ -45,6 +45,7 @@ export default class ParseApp {
     supportedPushLocales,
     preventSchemaEdits,
     deleteOptions,
+    exportOptions,
     graphQLServerURL,
     columnPreference,
     scripts,
@@ -78,6 +79,11 @@ export default class ParseApp {
     this.deleteOptions = deleteOptions || {
       class: true,
       columns: true,
+      selectedRows: true,
+      allData: true,
+    };
+    this.exportOptions = exportOptions || {
+      schema: true,
       selectedRows: true,
       allData: true,
     };
