@@ -59,6 +59,9 @@ const BrowserToolbar = ({
   onCancelPendingEditRows,
   order,
 
+  enableDeleteClass,
+  enableDeleteColumns,
+  enableDeleteSelectedRows,
   enableDeleteAllRows,
   enableExportClass,
   enableSecurityDialog,
@@ -166,14 +169,18 @@ const BrowserToolbar = ({
           text={`Clone ${selectionLength <= 1 ? 'this row' : 'these rows'}`}
           onClick={onCloneSelectedRows}
         />
+        {enableDeleteSelectedRows ? <Separator /> : <noscript />}
+        {enableDeleteSelectedRows ? (
+          <MenuItem
+            disabled={selectionLength === 0}
+            text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
+            onClick={() => onDeleteRows(selection)}
+          />
+        ) : (
+          <noscript />
+        )}
         <Separator />
-        <MenuItem
-          disabled={selectionLength === 0}
-          text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
-          onClick={() => onDeleteRows(selection)}
-        />
-        <Separator />
-        {enableColumnManipulation ? (
+        {enableColumnManipulation && enableDeleteColumns ? (
           <MenuItem text="Delete a column" onClick={onRemoveColumn} />
         ) : (
           <noscript />
@@ -183,7 +190,7 @@ const BrowserToolbar = ({
         ) : (
           <noscript />
         )}
-        {enableClassManipulation ? (
+        {enableClassManipulation && enableDeleteClass ? (
           <MenuItem text="Delete this class" onClick={onDropClass} />
         ) : (
           <noscript />
