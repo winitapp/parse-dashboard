@@ -44,6 +44,8 @@ export default class ParseApp {
     secondaryBackgroundColor,
     supportedPushLocales,
     preventSchemaEdits,
+    deleteOptions,
+    exportOptions,
     graphQLServerURL,
     columnPreference,
     scripts,
@@ -74,6 +76,17 @@ export default class ParseApp {
     this.secondaryBackgroundColor = secondaryBackgroundColor;
     this.supportedPushLocales = supportedPushLocales ? supportedPushLocales : [];
     this.preventSchemaEdits = preventSchemaEdits || false;
+    this.deleteOptions = deleteOptions || {
+      class: true,
+      columns: true,
+      selectedRows: true,
+      allData: true,
+    };
+    this.exportOptions = exportOptions || {
+      schema: true,
+      selectedRows: true,
+      allData: true,
+    };
     this.graphQLServerURL = graphQLServerURL;
     this.columnPreference = columnPreference;
     this.scripts = scripts;

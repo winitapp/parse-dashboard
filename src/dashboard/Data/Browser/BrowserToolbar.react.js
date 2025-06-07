@@ -59,7 +59,12 @@ const BrowserToolbar = ({
   onCancelPendingEditRows,
   order,
 
+  enableDeleteClass,
+  enableDeleteColumns,
+  enableDeleteSelectedRows,
   enableDeleteAllRows,
+  enableExportSchema,
+  enableExportSelectedRows,
   enableExportClass,
   enableSecurityDialog,
 
@@ -84,6 +89,7 @@ const BrowserToolbar = ({
   appName,
 }) => {
   const selectionLength = Object.keys(selection).length;
+  const hasSomeExportEnabled = enableExportSchema || enableExportSelectedRows || enableExportClass;
   const isPendingEditCloneRows = editCloneRows && editCloneRows.length > 0;
   const details = [];
   if (count !== undefined) {
@@ -166,14 +172,18 @@ const BrowserToolbar = ({
           text={`Clone ${selectionLength <= 1 ? 'this row' : 'these rows'}`}
           onClick={onCloneSelectedRows}
         />
+        {enableDeleteSelectedRows ? <Separator /> : <noscript />}
+        {enableDeleteSelectedRows ? (
+          <MenuItem
+            disabled={selectionLength === 0}
+            text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
+            onClick={() => onDeleteRows(selection)}
+          />
+        ) : (
+          <noscript />
+        )}
         <Separator />
-        <MenuItem
-          disabled={selectionLength === 0}
-          text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
-          onClick={() => onDeleteRows(selection)}
-        />
-        <Separator />
-        {enableColumnManipulation ? (
+        {enableColumnManipulation && enableDeleteColumns ? (
           <MenuItem text="Delete a column" onClick={onRemoveColumn} />
         ) : (
           <noscript />
@@ -183,7 +193,7 @@ const BrowserToolbar = ({
         ) : (
           <noscript />
         )}
-        {enableClassManipulation ? (
+        {enableClassManipulation && enableDeleteClass ? (
           <MenuItem text="Delete this class" onClick={onDropClass} />
         ) : (
           <noscript />
@@ -346,8 +356,8 @@ const BrowserToolbar = ({
           )}
         </BrowserMenu>
       )}
-      {onAddRow && <div className={styles.toolbarSeparator} />}
-      {onAddRow && (
+      {onAddRow && hasSomeExportEnabled && <div className={styles.toolbarSeparator} />}
+      {onAddRow && hasSomeExportEnabled && (
         <BrowserMenu
           title="Export"
           icon="down-solid"
@@ -355,12 +365,20 @@ const BrowserToolbar = ({
           setCurrent={setCurrent}
         >
           <MenuItem
-            disabled={!selectionLength}
+            disabled={!selectionLength || !enableExportSelectedRows}
             text={`Export ${selectionLength} selected ${selectionLength <= 1 ? 'row' : 'rows'}`}
             onClick={() => onExportSelectedRows(selection)}
           />
-          <MenuItem text={'Export all rows'} onClick={() => onExportSelectedRows({ '*': true })} />
-          <MenuItem text={'Export schema'} onClick={() => onExportSchema()} />
+          <MenuItem
+            disabled={!enableExportClass}
+            text={'Export all rows'}
+            onClick={() => onExportSelectedRows({ '*': true })}
+          />
+          <MenuItem
+            disabled={!enableExportSchema}
+            text={'Export schema'}
+            onClick={() => onExportSchema()}
+          />
         </BrowserMenu>
       )}
       {onAddRow && <div className={styles.toolbarSeparator} />}
