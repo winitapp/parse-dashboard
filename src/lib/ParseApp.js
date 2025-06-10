@@ -46,6 +46,7 @@ export default class ParseApp {
     preventSchemaEdits,
     deleteOptions,
     exportOptions,
+    securityOptions,
     graphQLServerURL,
     columnPreference,
     scripts,
@@ -87,6 +88,7 @@ export default class ParseApp {
       selectedRows: true,
       allData: true,
     };
+    this.securityOptions = securityOptions ?? true;
     this.graphQLServerURL = graphQLServerURL;
     this.columnPreference = columnPreference;
     this.scripts = scripts;

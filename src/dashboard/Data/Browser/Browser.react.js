@@ -2167,6 +2167,7 @@ class Browser extends DashboardView {
               editCloneRows={this.state.editCloneRows}
               relation={this.state.relation}
               disableKeyControls={this.hasExtras()}
+              disableSecurityDialog={!this.context.securityOptions}
               updateRow={this.updateRow}
               updateOrdering={this.updateOrdering}
               onPointerClick={this.handlePointerClick}

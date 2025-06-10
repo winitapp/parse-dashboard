@@ -18,7 +18,8 @@
         "schema": true,
         "selectedRows": true,
         "allData": true
-      }
+      },
+      "securityOptions": true
     }
   ],
   "iconsFolder": "icons"
