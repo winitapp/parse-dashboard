@@ -3090,6 +3090,7 @@ class Browser extends DashboardView {
               isUnique={this.state.isUnique}
               uniqueField={this.state.uniqueField}
               count={count}
+              disableSecurityDialog={!this.context.securityOptions}
               perms={this.state.clp[className]}
               schema={this.props.schema}
               filters={this.state.filters}

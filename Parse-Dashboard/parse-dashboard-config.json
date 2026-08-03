@@ -7,7 +7,19 @@
       "appName": "",
       "iconName": "",
       "primaryBackgroundColor": "",
-      "secondaryBackgroundColor": ""
+      "secondaryBackgroundColor": "",
+      "deleteOptions": {
+        "class": true,
+        "columns": true,
+        "selectedRows": true,
+        "allData": true
+      },
+      "exportOptions": {
+        "schema": true,
+        "selectedRows": true,
+        "allData": true
+      },
+      "securityOptions": true
     }
   ],
   "iconsFolder": "icons"

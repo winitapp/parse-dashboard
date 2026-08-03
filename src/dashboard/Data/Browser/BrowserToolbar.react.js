@@ -62,7 +62,12 @@ const BrowserToolbar = ({
   onCancelPendingEditRows,
   order,
 
+  enableDeleteClass,
+  enableDeleteColumns,
+  enableDeleteSelectedRows,
   enableDeleteAllRows,
+  enableExportSchema,
+  enableExportSelectedRows,
   enableExportClass,
   enableExportData,
   enableSecurityDialog,
@@ -193,14 +198,18 @@ const BrowserToolbar = ({
           text={`Clone ${selectionLength <= 1 ? 'this row' : 'these rows'}`}
           onClick={onCloneSelectedRows}
         />
+        {enableDeleteSelectedRows ? <Separator /> : <noscript />}
+        {enableDeleteSelectedRows ? (
+          <MenuItem
+            disabled={selectionLength === 0}
+            text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
+            onClick={() => onDeleteRows(selection)}
+          />
+        ) : (
+          <noscript />
+        )}
         <Separator />
-        <MenuItem
-          disabled={selectionLength === 0}
-          text={selectionLength === 1 && !selection['*'] ? 'Delete this row' : 'Delete these rows'}
-          onClick={() => onDeleteRows(selection)}
-        />
-        <Separator />
-        {enableColumnManipulation ? (
+        {enableColumnManipulation && enableDeleteColumns ? (
           <MenuItem text="Delete a column" onClick={onRemoveColumn} />
         ) : (
           <noscript />
@@ -210,7 +219,7 @@ const BrowserToolbar = ({
         ) : (
           <noscript />
         )}
-        {enableClassManipulation ? (
+        {enableClassManipulation && enableDeleteClass ? (
           <MenuItem text="Delete this class" onClick={onDropClass} />
         ) : (
           <noscript />
@@ -388,15 +397,20 @@ const BrowserToolbar = ({
           {enableExportData && (
             <>
               <MenuItem
-                disabled={!selectionLength}
+                disabled={!selectionLength || !enableExportSelectedRows}
                 text={`Export ${selectionLength} selected ${selectionLength <= 1 ? 'row' : 'rows'}`}
                 onClick={() => onExportSelectedRows(selection)}
               />
               <MenuItem
+                disabled={!enableExportClass}
                 text={'Export all rows'}
                 onClick={() => onExportSelectedRows({ '*': true })}
               />
-              <MenuItem text={'Export schema'} onClick={() => onExportSchema()} />
+              <MenuItem
+                disabled={!enableExportSchema}
+                text={'Export schema'}
+                onClick={() => onExportSchema()}
+              />
             </>
           )}
           {!relation && (

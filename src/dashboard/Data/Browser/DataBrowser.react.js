@@ -2723,7 +2723,8 @@ export default class DataBrowser extends React.Component {
       app,
       ...other
     } = this.props;
-    const { preventSchemaEdits, preventDataExport, applicationId } = app;
+    const { preventSchemaEdits, preventDataExport, applicationId, deleteOptions, exportOptions } =
+      app;
 
     // Calculate effective panel width based on actual displayed panels
     // When panelCount > 1 but fewer panels are actually displayed, reduce width proportionally
@@ -2972,13 +2973,30 @@ export default class DataBrowser extends React.Component {
           className={className}
           classNameForEditors={className}
           setCurrent={this.setCurrent}
+          enableDeleteClass={deleteOptions.class && !preventSchemaEdits}
+          enableDeleteColumns={deleteOptions.columns && !preventSchemaEdits}
+          enableDeleteSelectedRows={deleteOptions.selectedRows && !preventSchemaEdits}
           enableDeleteAllRows={
-            app.serverInfo.features.schemas.clearAllDataFromClass && !preventSchemaEdits
+            deleteOptions.allData &&
+            app.serverInfo.features.schemas.clearAllDataFromClass &&
+            !preventSchemaEdits
+          }
+          enableExportSchema={
+            exportOptions.schema && !preventSchemaEdits && !preventDataExport
+          }
+          enableExportSelectedRows={
+            exportOptions.selectedRows && !preventSchemaEdits && !preventDataExport
           }
           enableExportClass={
-            app.serverInfo.features.schemas.exportClass && !preventSchemaEdits && !preventDataExport
+            exportOptions.allData &&
+            app.serverInfo.features.schemas.exportClass &&
+            !preventSchemaEdits &&
+            !preventDataExport
           }
-          enableExportData={!preventDataExport}
+          enableExportData={
+            !preventDataExport &&
+            (exportOptions.schema || exportOptions.selectedRows || exportOptions.allData)
+          }
           enableSecurityDialog={
             app.serverInfo.features.schemas.editClassLevelPermissions &&
             !disableSecurityDialog &&

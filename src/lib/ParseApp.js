@@ -46,6 +46,9 @@ export default class ParseApp {
     supportedPushLocales,
     preventSchemaEdits,
     preventDataExport,
+    deleteOptions,
+    exportOptions,
+    securityOptions,
     graphQLServerURL,
     columnPreference,
     scripts,
@@ -79,6 +82,19 @@ export default class ParseApp {
     this.supportedPushLocales = supportedPushLocales ? supportedPushLocales : [];
     this.preventSchemaEdits = preventSchemaEdits || false;
     this.preventDataExport = preventDataExport || false;
+    // WinIt fork: granular delete/export/security toolbar gates (kept on top of upstream preventDataExport)
+    this.deleteOptions = deleteOptions || {
+      class: true,
+      columns: true,
+      selectedRows: true,
+      allData: true,
+    };
+    this.exportOptions = exportOptions || {
+      schema: true,
+      selectedRows: true,
+      allData: true,
+    };
+    this.securityOptions = securityOptions ?? true;
     this.graphQLServerURL = graphQLServerURL;
     this.columnPreference = columnPreference;
     this.scripts = scripts;
