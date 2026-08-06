@@ -10,6 +10,7 @@ npm-debug.log
 // vim .swp
 *.swp
 .env
+.env.ssm*.json
 .idea/
 
 logs/

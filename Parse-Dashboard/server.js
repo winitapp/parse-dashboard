@@ -137,8 +137,11 @@ module.exports = (options) => {
     }
   });
 
-  if (config.data.iconsFolder && configFilePath) {
-    config.data.iconsFolder = path.join(configFilePath, config.data.iconsFolder);
+  // Resolve iconsFolder relative to the config file, or to this package dir when
+  // config comes from PARSE_DASHBOARD_CONFIG (no config file path).
+  if (config.data.iconsFolder && !path.isAbsolute(config.data.iconsFolder)) {
+    const base = configFilePath || __dirname;
+    config.data.iconsFolder = path.join(base, config.data.iconsFolder);
   }
 
   const app = express();

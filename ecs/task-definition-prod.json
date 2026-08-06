@@ -1,0 +1,44 @@
+{
+  "family": "winit-parse-dashboard",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::240941311564:role/winit-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::240941311564:role/winit-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "parse-dashboard",
+      "image": "IMAGE_PLACEHOLDER",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 4040, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "4040" }
+      ],
+      "secrets": [
+        {
+          "name": "PARSE_DASHBOARD_TRUST_PROXY",
+          "valueFrom": "arn:aws:ssm:us-east-1:240941311564:parameter/winit/prod/parse-dashboard/config/1"
+        },
+        {
+          "name": "PARSE_DASHBOARD_COOKIE_SESSION_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:240941311564:parameter/winit/prod/parse-dashboard/config/2"
+        },
+        {
+          "name": "PARSE_DASHBOARD_CONFIG",
+          "valueFrom": "arn:aws:ssm:us-east-1:240941311564:parameter/winit/prod/parse-dashboard/config/3"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/winit-parse-dashboard",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
