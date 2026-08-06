@@ -1,0 +1,167 @@
+name: Deploy to AWS ECS
+
+# Production line for WinIt Parse Dashboard.
+#
+# - pull_request → main: run test suite only (no ECR / no ECS)
+# - push → main (incl. merge): tests must pass, then build → ECR → ECS
+# - workflow_dispatch on main: same as push
+#
+# Secrets (repo): AWS_ROLE_ARN, AWS_REGION, ECR_REGISTRY
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-parse-dashboard-aws-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "20.19.0"
+
+jobs:
+  test:
+    name: Test gate
+    runs-on: ubuntu-latest
+    if: github.repository == 'winitapp/parse-dashboard'
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Node engine check
+        run: npm run ci:checkNodeEngine
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Circular dependencies
+        run: npm run madge:circular
+
+      - name: Unit / integration tests
+        run: npm test
+
+      - name: Webpack / bundle smoke
+        run: ./scripts/before_script.sh
+        env:
+          CI: true
+
+      - name: Validate ECS task definition JSON
+        run: |
+          test -f ecs/task-definition-prod.json
+          jq -e '.family == "winit-parse-dashboard"' ecs/task-definition-prod.json
+          jq -e '.containerDefinitions[0].image == "IMAGE_PLACEHOLDER"' ecs/task-definition-prod.json
+          jq -e '.containerDefinitions[0].secrets | length >= 3' ecs/task-definition-prod.json
+          # Ensure icons referenced by SSM config exist in the image build context
+          test -f Parse-Dashboard/icons/production.png
+          test -f Parse-Dashboard/icons/staging.png
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker build (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: winit-parse-dashboard:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Docker image has icons
+        run: |
+          docker run --rm --entrypoint ls winit-parse-dashboard:ci -la /src/Parse-Dashboard/icons/
+          docker run --rm --entrypoint test winit-parse-dashboard:ci -f /src/Parse-Dashboard/icons/production.png
+          docker run --rm --entrypoint test winit-parse-dashboard:ci -f /src/Parse-Dashboard/icons/staging.png
+
+  build-and-deploy:
+    name: Build & deploy ECS
+    needs: [test]
+    runs-on: winit
+    # Push to main (direct or merge) or manual dispatch — never on PR
+    if: >
+      github.repository == 'winitapp/parse-dashboard' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          SHA="${{ github.sha }}"
+          SHORT="${SHA:0:7}"
+          echo "image=${ECR_REGISTRY}:main-${SHORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.image }}
+            ${{ secrets.ECR_REGISTRY }}:latest
+            ${{ secrets.ECR_REGISTRY }}:staging
+          cache-from: type=registry,ref=${{ secrets.ECR_REGISTRY }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.ECR_REGISTRY }}:buildcache,mode=max
+
+      - name: Register task definition
+        id: taskdef
+        run: |
+          IMAGE="${{ steps.tags.outputs.image }}"
+          TASK_DEF=$(sed "s|IMAGE_PLACEHOLDER|${IMAGE}|g" ecs/task-definition-prod.json)
+          ARN=$(aws ecs register-task-definition \
+            --region "$AWS_REGION" \
+            --cli-input-json "$TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "arn=$ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Rolling deploy
+        run: |
+          aws ecs update-service \
+            --cluster winit-backend-dev \
+            --service winit-parse-dashboard \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+          aws ecs wait services-stable \
+            --cluster winit-backend-dev \
+            --services winit-parse-dashboard \
+            --region "$AWS_REGION"
+
+      - name: Smoke login page
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "https://parse-dashboard.app.appwinit.com/login")
+          echo "HTTP $code"
+          test "$code" = "200"
