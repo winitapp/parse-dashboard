@@ -54,6 +54,7 @@ class Browser extends DashboardView {
     this.section = 'Core';
     this.subsection = 'Browser';
     this.noteTimeout = null;
+    this.fetchDataRequestId = 0;
     const limit = window.localStorage?.getItem('browserLimit');
 
     this.state = {
@@ -951,22 +952,21 @@ class Browser extends DashboardView {
     return count;
   }
 
-  async fetchData(source, filters = new List()) {
-    this.loadingFilters = JSON.stringify(filters.toJSON());
+  async fetchData(source, filters = new List(), { reuseCount = false } = {}) {
+    const requestId = ++this.fetchDataRequestId;
     const data = await this.fetchParseData(source, filters);
-    if (this.loadingFilters !== JSON.stringify(filters.toJSON())) {
+    if (requestId !== this.fetchDataRequestId) {
       return;
     }
 
     const filteredCounts = { ...this.state.filteredCounts };
-    if (filters.size > 0) {
-      if (this.state.isUnique) {
-        filteredCounts[source] = data.length;
-      } else {
-        filteredCounts[source] = await this.fetchParseDataCount(source, filters);
-      }
-    } else {
+    const knownCount = reuseCount ? filteredCounts[source] : undefined;
+    if (filters.size === 0) {
       delete filteredCounts[source];
+    } else if (this.state.isUnique) {
+      filteredCounts[source] = data.length;
+    } else {
+      filteredCounts[source] = knownCount;
     }
     this.setState({
       data: data,
@@ -974,6 +974,17 @@ class Browser extends DashboardView {
       lastMax: this.state.limit,
       filteredCounts: filteredCounts,
     });
+
+    if (filters.size === 0 || this.state.isUnique || knownCount !== undefined) {
+      return;
+    }
+    const count = await this.fetchParseDataCount(source, filters);
+    if (requestId !== this.fetchDataRequestId) {
+      return;
+    }
+    this.setState(state => ({
+      filteredCounts: { ...state.filteredCounts, [source]: count },
+    }));
   }
 
   async fetchRelation(relation, filters = new List()) {
@@ -1141,7 +1152,7 @@ class Browser extends DashboardView {
         isLoadingInfoPanel: false,
         AggregationPanelData: {},
       },
-      () => this.fetchData(source, this.state.filters)
+      () => this.fetchData(source, this.state.filters, { reuseCount: true })
     );
     ColumnPreferences.getColumnSort(
       ordering,

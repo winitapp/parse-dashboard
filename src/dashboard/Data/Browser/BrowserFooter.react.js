@@ -65,7 +65,7 @@ class BrowserFooter extends React.Component {
 
     return (
       <div className={styles.footer}>
-        <span><strong>{count?.toLocaleString() || 0}</strong> objects</span>
+        <span><strong>{count?.toLocaleString() ?? '…'}</strong> objects</span>
         <span style={{ color: 'lightgray' }}>|</span>
         <select value={limit} onChange={this.handleLimitChange}>
           {[10, 20, 50, 100, 200, 500, 1000].map(size => (
@@ -87,7 +87,7 @@ class BrowserFooter extends React.Component {
           onBlur={this.validateAndApplyPage}
           onKeyDown={this.handleKeyDown}
         />
-        <span>of {totalPages.toLocaleString()}</span>
+        <span>of {count === undefined ? '…' : totalPages.toLocaleString()}</span>
         <span style={{ color: 'lightgray' }}>|</span>
         <Button
           value="⬅︎"
