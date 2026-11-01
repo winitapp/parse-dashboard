@@ -112,22 +112,20 @@ export default class Login extends React.Component {
           }
         />
         {this.state.redirect && <input name="redirect" type="hidden" value={this.state.redirect} />}
-        {this.errors && this.errors.includes('one-time') ? (
-          <LoginRow
-            label="OTP"
-            input={
-              <input
-                name="otpCode"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]*"
-                onChange={e => updateField('otp', e)}
-                ref={this.inputRefMfa}
-              />
-            }
-          />
-        ) : null}
+        <LoginRow
+          label="OTP"
+          input={
+            <input
+              name="otpCode"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              onChange={e => updateField('otp', e)}
+              ref={this.inputRefMfa}
+            />
+          }
+        />
         {this.errors ? <div className={styles.error}>{this.errors}</div> : null}
       </LoginForm>
     );
