@@ -107,7 +107,10 @@ function authenticate(userToTest, usernameOnly) {
     this.validUsers.find(user => {
       let isAuthenticated = false;
       const usernameMatches = userToTest.name == user.user;
-      if (usernameMatches && user.mfa && !usernameOnly) {
+      if (!usernameMatches) {
+        return false;
+      }
+      if (user.mfa && !usernameOnly) {
         if (!userToTest.otpCode) {
           otpMissingLength = user.mfaDigits || 6;
         } else {
@@ -127,7 +130,7 @@ function authenticate(userToTest, usernameOnly) {
         }
       }
       const passwordMatches = this.useEncryptedPasswords && !usernameOnly ? bcrypt.compareSync(userToTest.pass, user.pass) : userToTest.pass == user.pass;
-      if (usernameMatches && (usernameOnly || passwordMatches)) {
+      if (usernameOnly || passwordMatches) {
         isAuthenticated = true;
         matchingUsername = user.user;
         // User restricted apps
