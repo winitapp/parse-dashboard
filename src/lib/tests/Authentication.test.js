@@ -159,4 +159,13 @@ describe('Authentication', () => {
       })
     ).toEqual(createAuthenticationResult(true, 'parse.readonly.apps', readOnlyApps, false));
   });
+
+  it('only compares the password of the matching user', () => {
+    const bcrypt = require('bcryptjs');
+    const compareSync = jest.spyOn(bcrypt, 'compareSync');
+    const authentication = new Authentication(encryptedUsers, true);
+    authentication.authenticate({ name: 'parse.apps', pass: 'xyz789' });
+    expect(compareSync).toHaveBeenCalledTimes(1);
+    compareSync.mockRestore();
+  });
 });
